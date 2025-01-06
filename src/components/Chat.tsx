@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
+import { motion } from "framer-motion";
+import { Send } from "lucide-react";
 
 export const Chat = () => {
   const { toast } = useToast();
@@ -32,8 +34,6 @@ export const Chat = () => {
     setInput("");
     setIsLoading(true);
 
-    // Here we would integrate with an AI service
-    // For now, we'll simulate a response
     setTimeout(() => {
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -50,27 +50,30 @@ export const Chat = () => {
     <div className="flex flex-col h-full">
       <ScrollArea className="flex-1 p-4">
         <div className="space-y-4">
-          {messages.map((message) => (
-            <div
+          {messages.map((message, index) => (
+            <motion.div
               key={message.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
               className={`flex ${
                 message.role === "user" ? "justify-end" : "justify-start"
               }`}
             >
               <div
-                className={`max-w-[80%] rounded-lg p-3 ${
+                className={`max-w-[80%] rounded-lg p-3 shadow-sm ${
                   message.role === "user"
                     ? "bg-primary text-primary-foreground"
-                    : "bg-secondary text-secondary-foreground"
+                    : "bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 }`}
               >
                 {message.content}
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       </ScrollArea>
-      <div className="p-4 border-t">
+      <div className="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
         <div className="flex gap-2">
           <Input
             value={input}
@@ -78,9 +81,14 @@ export const Chat = () => {
             placeholder="Type your response..."
             onKeyPress={(e) => e.key === "Enter" && handleSend()}
             disabled={isLoading}
+            className="bg-white dark:bg-gray-800"
           />
-          <Button onClick={handleSend} disabled={isLoading}>
-            Send
+          <Button 
+            onClick={handleSend} 
+            disabled={isLoading}
+            className="px-4"
+          >
+            <Send className="w-4 h-4" />
           </Button>
         </div>
       </div>
