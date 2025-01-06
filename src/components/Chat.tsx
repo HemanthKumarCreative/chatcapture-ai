@@ -26,14 +26,13 @@ export const Chat = () => {
   ]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
   useEffect(() => {
-    // Try to get API key from localStorage
     const storedApiKey = localStorage.getItem("openai_api_key");
     if (storedApiKey) {
       setApiKey(storedApiKey);
     } else {
-      // Prompt user for API key
       const userApiKey = prompt("Please enter your OpenAI API key:");
       if (userApiKey) {
         localStorage.setItem("openai_api_key", userApiKey);
@@ -129,17 +128,33 @@ export const Chat = () => {
               </div>
             </motion.div>
           ))}
+          {isLoading && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex justify-start"
+            >
+              <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-3 shadow-sm flex space-x-2">
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }}></span>
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }}></span>
+                <span className="w-2 h-2 bg-gray-500 rounded-full animate-bounce" style={{ animationDelay: "300ms" }}></span>
+              </div>
+            </motion.div>
+          )}
         </div>
       </ScrollArea>
       <div className="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
         <div className="flex gap-2">
           <Input
             value={input}
-            onChange={(e) => setInput(e.target.value)}
+            onChange={(e) => {
+              setInput(e.target.value);
+              setIsTyping(e.target.value.length > 0);
+            }}
             placeholder="Type your response..."
             onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSend()}
             disabled={isLoading}
-            className="bg-white dark:bg-gray-800"
+            className={`bg-white dark:bg-gray-800 ${isTyping ? 'border-primary' : ''}`}
           />
           <Button 
             onClick={handleSend} 
