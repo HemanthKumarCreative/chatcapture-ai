@@ -28,29 +28,35 @@ export const Chat = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // Try to get API key from localStorage
     const storedApiKey = localStorage.getItem("openai_api_key");
     if (storedApiKey) {
       setApiKey(storedApiKey);
-    } else {
-      // Prompt user for API key
-      const userApiKey = prompt("Please enter your OpenAI API key:");
-      if (userApiKey) {
-        localStorage.setItem("openai_api_key", userApiKey);
-        setApiKey(userApiKey);
-      }
     }
   }, []);
 
-  const handleSend = async () => {
-    if (!input.trim()) return;
-    if (!apiKey) {
+  const promptForApiKey = () => {
+    const userApiKey = prompt("Please enter your OpenAI API key (starts with 'sk-'):");
+    if (userApiKey?.startsWith('sk-')) {
+      localStorage.setItem("openai_api_key", userApiKey);
+      setApiKey(userApiKey);
+      return userApiKey;
+    } else {
       toast({
-        title: "Error",
-        description: "OpenAI API key is required",
+        title: "Invalid API Key",
+        description: "Please enter a valid OpenAI API key that starts with 'sk-'",
         variant: "destructive",
       });
-      return;
+      return null;
+    }
+  };
+
+  const handleSend = async () => {
+    if (!input.trim()) return;
+    
+    let currentApiKey = apiKey;
+    if (!currentApiKey) {
+      currentApiKey = promptForApiKey();
+      if (!currentApiKey) return;
     }
 
     const userMessage: Message = {
@@ -66,7 +72,7 @@ export const Chat = () => {
 
     try {
       const openai = new OpenAI({
-        apiKey: apiKey,
+        apiKey: currentApiKey,
         dangerouslyAllowBrowser: true
       });
 
@@ -92,13 +98,26 @@ export const Chat = () => {
       };
 
       setMessages((prev) => [...prev, aiMessage]);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error calling OpenAI:", error);
-      toast({
-        title: "Error",
-        description: "Failed to get AI response. Please try again.",
-        variant: "destructive",
-      });
+      
+      // Handle invalid API key specifically
+      if (error?.status === 401) {
+        localStorage.removeItem("openai_api_key");
+        setApiKey("");
+        toast({
+          title: "Invalid API Key",
+          description: "Your OpenAI API key is invalid. Please enter a valid key.",
+          variant: "destructive",
+        });
+        promptForApiKey();
+      } else {
+        toast({
+          title: "Error",
+          description: "Failed to get AI response. Please try again.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setIsLoading(false);
     }
