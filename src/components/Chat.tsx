@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Message } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,12 +8,6 @@ import { motion } from "framer-motion";
 import { Send } from "lucide-react";
 import OpenAI from "openai";
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || "",
-  dangerouslyAllowBrowser: true
-});
-
 const SYSTEM_PROMPT = `You are an AI interviewer conducting a professional job interview. 
 Your responses should be concise, professional, and focused on gathering relevant information 
 about the candidate's experience, skills, and qualifications. Start with a friendly introduction 
@@ -21,6 +15,7 @@ and then proceed with appropriate interview questions based on their responses.`
 
 export const Chat = () => {
   const { toast } = useToast();
+  const [apiKey, setApiKey] = useState<string>("");
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -32,8 +27,31 @@ export const Chat = () => {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
+  useEffect(() => {
+    // Try to get API key from localStorage
+    const storedApiKey = localStorage.getItem("openai_api_key");
+    if (storedApiKey) {
+      setApiKey(storedApiKey);
+    } else {
+      // Prompt user for API key
+      const userApiKey = prompt("Please enter your OpenAI API key:");
+      if (userApiKey) {
+        localStorage.setItem("openai_api_key", userApiKey);
+        setApiKey(userApiKey);
+      }
+    }
+  }, []);
+
   const handleSend = async () => {
     if (!input.trim()) return;
+    if (!apiKey) {
+      toast({
+        title: "Error",
+        description: "OpenAI API key is required",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -47,6 +65,11 @@ export const Chat = () => {
     setIsLoading(true);
 
     try {
+      const openai = new OpenAI({
+        apiKey: apiKey,
+        dangerouslyAllowBrowser: true
+      });
+
       const response = await openai.chat.completions.create({
         model: "gpt-4",
         messages: [
