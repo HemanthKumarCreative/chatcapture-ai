@@ -6,13 +6,25 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/components/ui/use-toast";
 import { motion } from "framer-motion";
 import { Send } from "lucide-react";
+import OpenAI from "openai";
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || "",
+  dangerouslyAllowBrowser: true
+});
+
+const SYSTEM_PROMPT = `You are an AI interviewer conducting a professional job interview. 
+Your responses should be concise, professional, and focused on gathering relevant information 
+about the candidate's experience, skills, and qualifications. Start with a friendly introduction 
+and then proceed with appropriate interview questions based on their responses.`;
 
 export const Chat = () => {
   const { toast } = useToast();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      content: "Hello! I'm your AI interviewer. Are you ready to begin?",
+      content: "Hello! I'm your AI interviewer. Could you please introduce yourself and tell me about your professional background?",
       role: "assistant",
       timestamp: Date.now(),
     },
@@ -34,16 +46,39 @@ export const Chat = () => {
     setInput("");
     setIsLoading(true);
 
-    setTimeout(() => {
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          ...messages.map(msg => ({
+            role: msg.role as "user" | "assistant",
+            content: msg.content
+          })),
+          { role: "user", content: input }
+        ],
+        temperature: 0.7,
+        max_tokens: 500,
+      });
+
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
-        content: "Thank you for your response. Could you elaborate more on that?",
+        content: response.choices[0]?.message?.content || "I apologize, but I couldn't generate a response. Please try again.",
         role: "assistant",
         timestamp: Date.now(),
       };
+
       setMessages((prev) => [...prev, aiMessage]);
+    } catch (error) {
+      console.error("Error calling OpenAI:", error);
+      toast({
+        title: "Error",
+        description: "Failed to get AI response. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -79,7 +114,7 @@ export const Chat = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="Type your response..."
-            onKeyPress={(e) => e.key === "Enter" && handleSend()}
+            onKeyPress={(e) => e.key === "Enter" && !isLoading && handleSend()}
             disabled={isLoading}
             className="bg-white dark:bg-gray-800"
           />
