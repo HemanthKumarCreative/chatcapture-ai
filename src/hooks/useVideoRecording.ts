@@ -25,7 +25,6 @@ export const useVideoRecording = () => {
 
       mediaRecorder.onstop = () => {
         const blob = new Blob(chunks, { type: "video/webm" });
-        // Here we would upload to Supabase storage
         console.log("Recording stopped, blob created:", blob);
       };
 
@@ -40,7 +39,7 @@ export const useVideoRecording = () => {
 
       toast({
         title: "Recording Started",
-        description: "Your video is now being recorded.",
+        description: "Your interview is now being recorded.",
       });
     } catch (error) {
       setState((prev) => ({
@@ -67,18 +66,28 @@ export const useVideoRecording = () => {
       });
       toast({
         title: "Recording Stopped",
-        description: "Your video has been saved.",
+        description: "Your interview recording has been saved.",
       });
     }
   }, [state.mediaRecorder, state.stream, toast]);
 
   useEffect(() => {
+    // Handle browser close/refresh
+    const handleBeforeUnload = () => {
+      if (state.isRecording) {
+        stopRecording();
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    
     return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
       if (state.stream) {
         state.stream.getTracks().forEach((track) => track.stop());
       }
     };
-  }, [state.stream]);
+  }, [state.isRecording, state.stream, stopRecording]);
 
   return {
     ...state,

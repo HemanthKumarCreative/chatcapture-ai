@@ -1,13 +1,11 @@
 import { useEffect, useRef } from "react";
 import { useVideoRecording } from "@/hooks/useVideoRecording";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Video, StopCircle } from "lucide-react";
 import { motion } from "framer-motion";
 
 export const VideoRecorder = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const { isRecording, stream, error, startRecording, stopRecording } = useVideoRecording();
+  const { isRecording, stream, error } = useVideoRecording();
 
   useEffect(() => {
     if (videoRef.current && stream) {
@@ -37,24 +35,6 @@ export const VideoRecorder = () => {
         )}
       </div>
       <div className="p-4 bg-gray-50 dark:bg-gray-900 border-t dark:border-gray-700">
-        {!isRecording ? (
-          <Button 
-            onClick={startRecording} 
-            className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-white"
-          >
-            <Video className="w-4 h-4 mr-2" />
-            Start Recording
-          </Button>
-        ) : (
-          <Button 
-            onClick={stopRecording} 
-            variant="destructive" 
-            className="w-full sm:w-auto"
-          >
-            <StopCircle className="w-4 h-4 mr-2" />
-            Stop Recording
-          </Button>
-        )}
         {error && (
           <p className="mt-2 text-sm text-red-500 text-center">{error}</p>
         )}

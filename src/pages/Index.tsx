@@ -4,14 +4,18 @@ import { Chat } from "@/components/Chat";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
+import { useVideoRecording } from "@/hooks/useVideoRecording";
 
 const Index = () => {
   const [hasConsent, setHasConsent] = useState(false);
   const [showConsent, setShowConsent] = useState(true);
+  const { startRecording } = useVideoRecording();
 
   const handleConsent = () => {
     setHasConsent(true);
     setShowConsent(false);
+    // Start recording immediately after consent
+    startRecording();
   };
 
   return (
@@ -22,6 +26,7 @@ const Index = () => {
             <DialogTitle className="text-2xl font-bold">Welcome to AI Interview</DialogTitle>
             <DialogDescription className="mt-4 text-gray-600 dark:text-gray-300 leading-relaxed">
               This application will record video and audio during your interview session. 
+              The recording will start automatically after you give consent and will stop when you close the browser. 
               The recording will be used only for interview purposes and stored securely. 
               By clicking "I Agree", you consent to being recorded during this session.
             </DialogDescription>
