@@ -40,26 +40,23 @@ const Index = () => {
       </Dialog>
 
       {hasConsent && (
-        <div className="container py-8 px-4 sm:px-6 lg:px-8">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-8"
-          >
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Video Interview</h2>
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
+        <div className="h-screen flex flex-col md:flex-row">
+          <div className="w-full md:w-1/3 p-4">
+            <div className="h-full flex flex-col">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Video Interview</h2>
+              <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
                 <VideoRecorder />
               </div>
             </div>
-            <div className="space-y-4">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white">AI Interviewer</h2>
-              <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg h-[600px]">
+          </div>
+          <div className="w-full md:w-2/3 p-4">
+            <div className="h-full flex flex-col">
+              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">AI Interviewer</h2>
+              <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
                 <Chat />
               </div>
             </div>
-          </motion.div>
+          </div>
         </div>
       )}
     </div>
