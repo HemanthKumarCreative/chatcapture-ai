@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { motion } from "framer-motion";
 import { useVideoRecording } from "@/hooks/useVideoRecording";
+import { Video } from "lucide-react";
 
 const Index = () => {
   const [hasConsent, setHasConsent] = useState(false);
   const [showConsent, setShowConsent] = useState(true);
-  const { startRecording } = useVideoRecording();
+  const { startRecording, isRecording } = useVideoRecording();
 
   const handleConsent = () => {
     setHasConsent(true);
@@ -44,6 +45,18 @@ const Index = () => {
           <div className="hidden">
             <VideoRecorder />
           </div>
+          
+          {/* Recording indicator */}
+          {isRecording && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="fixed top-4 right-4 flex items-center gap-2 bg-red-500/90 backdrop-blur-sm text-white px-4 py-2 rounded-full shadow-lg z-50"
+            >
+              <div className="w-3 h-3 bg-white rounded-full animate-recording-pulse" />
+              <Video className="w-4 h-4" />
+            </motion.div>
+          )}
           
           {/* Full screen chat */}
           <div className="h-full p-4">
