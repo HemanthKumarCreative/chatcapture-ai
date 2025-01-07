@@ -14,7 +14,6 @@ const Index = () => {
   const handleConsent = () => {
     setHasConsent(true);
     setShowConsent(false);
-    // Start recording immediately after consent
     startRecording();
   };
 
@@ -40,16 +39,14 @@ const Index = () => {
       </Dialog>
 
       {hasConsent && (
-        <div className="h-screen flex flex-col md:flex-row">
-          <div className="w-full md:w-1/3 p-4">
-            <div className="h-full flex flex-col">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Video Interview</h2>
-              <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden">
-                <VideoRecorder />
-              </div>
-            </div>
+        <div className="h-screen">
+          {/* Hidden video recorder for background recording */}
+          <div className="hidden">
+            <VideoRecorder />
           </div>
-          <div className="w-full md:w-2/3 p-4">
+          
+          {/* Full screen chat */}
+          <div className="h-full p-4">
             <div className="h-full flex flex-col">
               <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">AI Interviewer</h2>
               <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
