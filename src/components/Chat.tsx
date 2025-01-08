@@ -4,6 +4,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Mic, MicOff, Volume2, VolumeX } from "lucide-react";
 import { useAudioChat } from "@/hooks/useAudioChat";
 import { MessageList } from "@/components/MessageList";
+import { ApiKeyDialog } from "@/components/ApiKeyDialog";
 
 export const Chat = () => {
   const scrollAreaRef = useRef<HTMLDivElement>(null);
@@ -14,6 +15,9 @@ export const Chat = () => {
     isLoading,
     startListening,
     setIsMuted,
+    showApiKeyDialog,
+    setShowApiKeyDialog,
+    saveApiKeys,
   } = useAudioChat();
 
   const toggleMute = () => {
@@ -50,6 +54,12 @@ export const Chat = () => {
           </Button>
         </div>
       </div>
+
+      <ApiKeyDialog
+        open={showApiKeyDialog}
+        onOpenChange={setShowApiKeyDialog}
+        onSave={saveApiKeys}
+      />
     </div>
   );
 };

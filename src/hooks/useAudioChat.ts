@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Message } from "@/types";
 import { useToast } from "@/components/ui/use-toast";
 import OpenAI from "openai";
 import { useConversation } from "@11labs/react";
+import { useApiKeys } from "./useApiKeys";
 
 const SYSTEM_PROMPT = `You are a friendly and engaging AI assistant having a natural conversation. 
 Keep your responses conversational, warm, and relatable while maintaining professionalism. 
@@ -11,8 +12,7 @@ questions to keep the conversation flowing naturally.`;
 
 export const useAudioChat = () => {
   const { toast } = useToast();
-  const [apiKey, setApiKey] = useState<string>("");
-  const [elevenLabsKey, setElevenLabsKey] = useState<string>("");
+  const { apiKey, elevenLabsKey, showApiKeyDialog, setShowApiKeyDialog, saveApiKeys } = useApiKeys();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -26,75 +26,13 @@ export const useAudioChat = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const conversation = useConversation({
-    overrides: {
-      tts: {
-        voiceId: "Charlie", // Using a natural-sounding voice
-      },
-    },
+    voiceId: "Charlie",
   });
-
-  useEffect(() => {
-    const initializeKeys = async () => {
-      try {
-        const storedApiKey = localStorage.getItem("openai_api_key");
-        const storedElevenLabsKey = localStorage.getItem("elevenlabs_api_key");
-        
-        if (storedApiKey && storedElevenLabsKey) {
-          setApiKey(storedApiKey);
-          setElevenLabsKey(storedElevenLabsKey);
-          await initializeConversation(storedElevenLabsKey);
-        } else {
-          toast({
-            title: "Welcome!",
-            description: "Please provide your API keys to start the conversation.",
-          });
-          const userApiKey = prompt("Please enter your OpenAI API key:");
-          const userElevenLabsKey = prompt("Please enter your ElevenLabs API key:");
-          if (userApiKey && userElevenLabsKey) {
-            localStorage.setItem("openai_api_key", userApiKey);
-            localStorage.setItem("elevenlabs_api_key", userElevenLabsKey);
-            setApiKey(userApiKey);
-            setElevenLabsKey(userElevenLabsKey);
-            await initializeConversation(userElevenLabsKey);
-          }
-        }
-      } catch (error) {
-        console.error("Error initializing:", error);
-        toast({
-          title: "Error",
-          description: "Failed to initialize the conversation. Please try again.",
-          variant: "destructive",
-        });
-      }
-    };
-
-    initializeKeys();
-  }, []);
-
-  const initializeConversation = async (elevenLabsKey: string) => {
-    try {
-      await conversation.startSession({
-        agentId: "default",
-      });
-      conversation.setVolume({ volume: 0.8 });
-    } catch (error) {
-      console.error("Error initializing conversation:", error);
-      toast({
-        title: "Error",
-        description: "Failed to initialize voice chat. Please check your ElevenLabs API key.",
-        variant: "destructive",
-      });
-    }
-  };
 
   const handleSpeechInput = async (transcript: string) => {
     if (!transcript.trim()) return;
     if (!apiKey || !elevenLabsKey) {
-      toast({
-        title: "Error",
-        description: "API keys are required to continue the conversation.",
-        variant: "destructive",
-      });
+      setShowApiKeyDialog(true);
       return;
     }
 
@@ -124,7 +62,7 @@ export const useAudioChat = () => {
           })),
           { role: "user", content: transcript }
         ],
-        temperature: 0.8, // Slightly higher for more natural responses
+        temperature: 0.8,
         max_tokens: 500,
       });
 
@@ -142,8 +80,9 @@ export const useAudioChat = () => {
 
       if (!isMuted) {
         try {
-          // Use ElevenLabs to speak the response
-          await conversation.speak(aiResponse);
+          await conversation.generate({
+            text: aiResponse,
+          });
         } catch (error) {
           console.error("Error with text-to-speech:", error);
           toast({
@@ -224,5 +163,8 @@ export const useAudioChat = () => {
     isLoading,
     startListening,
     setIsMuted,
+    showApiKeyDialog,
+    setShowApiKeyDialog,
+    saveApiKeys,
   };
 };
