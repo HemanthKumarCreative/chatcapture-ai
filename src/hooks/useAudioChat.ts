@@ -34,22 +34,26 @@ export const useAudioChat = () => {
   });
 
   useEffect(() => {
-    const storedApiKey = localStorage.getItem("openai_api_key");
-    const storedElevenLabsKey = localStorage.getItem("elevenlabs_api_key");
-    
-    if (storedApiKey && storedElevenLabsKey) {
-      setApiKey(storedApiKey);
-      setElevenLabsKey(storedElevenLabsKey);
-    } else {
-      const userApiKey = prompt("Please enter your OpenAI API key:");
-      const userElevenLabsKey = prompt("Please enter your ElevenLabs API key:");
-      if (userApiKey && userElevenLabsKey) {
-        localStorage.setItem("openai_api_key", userApiKey);
-        localStorage.setItem("elevenlabs_api_key", userElevenLabsKey);
-        setApiKey(userApiKey);
-        setElevenLabsKey(userElevenLabsKey);
+    const initializeKeys = async () => {
+      const storedApiKey = localStorage.getItem("openai_api_key");
+      const storedElevenLabsKey = localStorage.getItem("elevenlabs_api_key");
+      
+      if (storedApiKey && storedElevenLabsKey) {
+        setApiKey(storedApiKey);
+        setElevenLabsKey(storedElevenLabsKey);
+      } else {
+        const userApiKey = prompt("Please enter your OpenAI API key:");
+        const userElevenLabsKey = prompt("Please enter your ElevenLabs API key:");
+        if (userApiKey && userElevenLabsKey) {
+          localStorage.setItem("openai_api_key", userApiKey);
+          localStorage.setItem("elevenlabs_api_key", userElevenLabsKey);
+          setApiKey(userApiKey);
+          setElevenLabsKey(userElevenLabsKey);
+        }
       }
-    }
+    };
+
+    initializeKeys();
   }, []);
 
   const handleSpeechInput = async (transcript: string) => {
@@ -106,10 +110,16 @@ export const useAudioChat = () => {
       setMessages((prev) => [...prev, aiMessage]);
 
       if (!isMuted) {
-        await conversation.startSession({
-          agentId: "default",
-        });
-        conversation.setVolume({ volume: 0.8 });
+        try {
+          await conversation.startSession({
+            agentId: "default",
+          });
+          conversation.setVolume({ volume: 0.8 });
+          // Use the conversation instance to speak the AI response
+          // This will be handled by ElevenLabs
+        } catch (error) {
+          console.error("Error with text-to-speech:", error);
+        }
       }
 
     } catch (error) {
@@ -157,6 +167,11 @@ export const useAudioChat = () => {
     recognition.onerror = (event: any) => {
       console.error("Speech recognition error:", event.error);
       setIsListening(false);
+      toast({
+        title: "Error",
+        description: "There was an error with speech recognition. Please try again.",
+        variant: "destructive",
+      });
     };
 
     recognition.onend = () => {
