@@ -32,6 +32,7 @@ export const Chat = () => {
             variant="outline"
             size="icon"
             className="rounded-full"
+            title={isMuted ? "Unmute" : "Mute"}
           >
             {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </Button>

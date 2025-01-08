@@ -4,10 +4,10 @@ import { useToast } from "@/components/ui/use-toast";
 import OpenAI from "openai";
 import { useConversation } from "@11labs/react";
 
-const SYSTEM_PROMPT = `You are an AI interviewer conducting a professional job interview. 
-Your responses should be concise, professional, and focused on gathering relevant information 
-about the candidate's experience, skills, and qualifications. Start with a friendly introduction 
-and then proceed with appropriate interview questions based on their responses.`;
+const SYSTEM_PROMPT = `You are a friendly and engaging AI assistant having a natural conversation. 
+Keep your responses conversational, warm, and relatable while maintaining professionalism. 
+Use a natural speaking style with appropriate pauses and intonation. Feel free to ask follow-up 
+questions to keep the conversation flowing naturally.`;
 
 export const useAudioChat = () => {
   const { toast } = useToast();
@@ -16,7 +16,7 @@ export const useAudioChat = () => {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
-      content: "Hello! I'm your AI interviewer. Could you please introduce yourself and tell me about your professional background?",
+      content: "Hi there! I'm your AI assistant. How can I help you today?",
       role: "assistant",
       timestamp: Date.now(),
     },
@@ -28,40 +28,71 @@ export const useAudioChat = () => {
   const conversation = useConversation({
     overrides: {
       tts: {
-        voiceId: "Charlie",
+        voiceId: "Charlie", // Using a natural-sounding voice
       },
     },
   });
 
   useEffect(() => {
     const initializeKeys = async () => {
-      const storedApiKey = localStorage.getItem("openai_api_key");
-      const storedElevenLabsKey = localStorage.getItem("elevenlabs_api_key");
-      
-      if (storedApiKey && storedElevenLabsKey) {
-        setApiKey(storedApiKey);
-        setElevenLabsKey(storedElevenLabsKey);
-      } else {
-        const userApiKey = prompt("Please enter your OpenAI API key:");
-        const userElevenLabsKey = prompt("Please enter your ElevenLabs API key:");
-        if (userApiKey && userElevenLabsKey) {
-          localStorage.setItem("openai_api_key", userApiKey);
-          localStorage.setItem("elevenlabs_api_key", userElevenLabsKey);
-          setApiKey(userApiKey);
-          setElevenLabsKey(userElevenLabsKey);
+      try {
+        const storedApiKey = localStorage.getItem("openai_api_key");
+        const storedElevenLabsKey = localStorage.getItem("elevenlabs_api_key");
+        
+        if (storedApiKey && storedElevenLabsKey) {
+          setApiKey(storedApiKey);
+          setElevenLabsKey(storedElevenLabsKey);
+          await initializeConversation(storedElevenLabsKey);
+        } else {
+          toast({
+            title: "Welcome!",
+            description: "Please provide your API keys to start the conversation.",
+          });
+          const userApiKey = prompt("Please enter your OpenAI API key:");
+          const userElevenLabsKey = prompt("Please enter your ElevenLabs API key:");
+          if (userApiKey && userElevenLabsKey) {
+            localStorage.setItem("openai_api_key", userApiKey);
+            localStorage.setItem("elevenlabs_api_key", userElevenLabsKey);
+            setApiKey(userApiKey);
+            setElevenLabsKey(userElevenLabsKey);
+            await initializeConversation(userElevenLabsKey);
+          }
         }
+      } catch (error) {
+        console.error("Error initializing:", error);
+        toast({
+          title: "Error",
+          description: "Failed to initialize the conversation. Please try again.",
+          variant: "destructive",
+        });
       }
     };
 
     initializeKeys();
   }, []);
 
+  const initializeConversation = async (elevenLabsKey: string) => {
+    try {
+      await conversation.startSession({
+        agentId: "default",
+      });
+      conversation.setVolume({ volume: 0.8 });
+    } catch (error) {
+      console.error("Error initializing conversation:", error);
+      toast({
+        title: "Error",
+        description: "Failed to initialize voice chat. Please check your ElevenLabs API key.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleSpeechInput = async (transcript: string) => {
     if (!transcript.trim()) return;
     if (!apiKey || !elevenLabsKey) {
       toast({
         title: "Error",
-        description: "API keys are required",
+        description: "API keys are required to continue the conversation.",
         variant: "destructive",
       });
       return;
@@ -93,12 +124,12 @@ export const useAudioChat = () => {
           })),
           { role: "user", content: transcript }
         ],
-        temperature: 0.7,
+        temperature: 0.8, // Slightly higher for more natural responses
         max_tokens: 500,
       });
 
       const aiResponse = response.choices[0]?.message?.content || 
-        "I apologize, but I couldn't generate a response. Please try again.";
+        "I apologize, but I couldn't generate a response. Could you please try rephrasing that?";
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -111,14 +142,15 @@ export const useAudioChat = () => {
 
       if (!isMuted) {
         try {
-          await conversation.startSession({
-            agentId: "default",
-          });
-          conversation.setVolume({ volume: 0.8 });
-          // Use the conversation instance to speak the AI response
-          // This will be handled by ElevenLabs
+          // Use ElevenLabs to speak the response
+          await conversation.speak(aiResponse);
         } catch (error) {
           console.error("Error with text-to-speech:", error);
+          toast({
+            title: "Voice Error",
+            description: "Couldn't play the voice response. Text response is still available.",
+            variant: "destructive",
+          });
         }
       }
 
@@ -138,7 +170,7 @@ export const useAudioChat = () => {
     if (!('webkitSpeechRecognition' in window)) {
       toast({
         title: "Error",
-        description: "Speech recognition is not supported in this browser.",
+        description: "Speech recognition is not supported in your browser. Please try using Chrome.",
         variant: "destructive",
       });
       return;
@@ -150,6 +182,10 @@ export const useAudioChat = () => {
 
     recognition.onstart = () => {
       setIsListening(true);
+      toast({
+        title: "Listening",
+        description: "I'm listening... Speak clearly into your microphone.",
+      });
     };
 
     recognition.onresult = async (event: any) => {
