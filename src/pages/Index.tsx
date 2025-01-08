@@ -51,50 +51,57 @@ const Index = () => {
       </Dialog>
 
       {hasConsent && (
-        <div className="h-screen">
-          {/* Hidden video recorder for background recording */}
-          <div className="hidden">
-            <VideoRecorder />
-          </div>
+        <div className="h-screen p-4">
+          <div className="h-full grid grid-cols-2 gap-4">
+            {/* Left side - AI Interviewer */}
+            <div className="relative bg-gray-900 rounded-lg overflow-hidden">
+              <div className="absolute inset-0 flex items-center justify-center">
+                <img
+                  src="https://api.dicebear.com/7.x/bottts/svg?seed=interviewer"
+                  alt="AI Interviewer"
+                  className="w-64 h-64"
+                />
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-gray-900 to-transparent">
+                <h2 className="text-white text-xl font-semibold mb-2">AI Interviewer</h2>
+                <p className="text-gray-300 text-sm">Professional Interview Assistant</p>
+              </div>
+            </div>
 
-          {/* Recording indicator with circular video preview */}
-          {isRecording && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="fixed w-40 h-28 top-4 right-4 flex items-center gap-3 bg-black/80 backdrop-blur-sm text-white p-2 rounded-full shadow-lg z-50"
-            >
-              <div className="relative">
+            {/* Right side - User Video and Chat */}
+            <div className="flex flex-col gap-4">
+              {/* User video preview */}
+              <div className="relative h-1/2 bg-gray-800 rounded-lg overflow-hidden">
                 <video
                   autoPlay
                   muted
                   playsInline
-                  className="w-24 h-24 rounded-full object-cover"
-                  style={{ transform: "scaleX(-1)" }}
+                  className="w-full h-full object-cover"
+                  style={{ transform: 'scaleX(-1)' }}
                   ref={(videoElement) => {
                     if (videoElement && stream) {
                       videoElement.srcObject = stream;
                     }
                   }}
                 />
-                <div className="absolute top-0 right-0 w-3 h-3">
-                  <div className="w-full h-full bg-red-500 rounded-full animate-recording-pulse" />
-                </div>
+                {isRecording && (
+                  <div className="absolute top-4 right-4 flex items-center gap-2 bg-red-500/90 px-3 py-1 rounded-full">
+                    <div className="w-2 h-2 bg-white rounded-full animate-recording-pulse" />
+                    <span className="text-white text-sm font-medium">Recording</span>
+                  </div>
+                )}
               </div>
-              <Video className="w-4 h-4" />
-            </motion.div>
-          )}
 
-          {/* Full screen chat */}
-          <div className="h-full p-4">
-            <div className="h-full flex flex-col">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
-                AI Interviewer
-              </h2>
-              <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+              {/* Chat interface */}
+              <div className="flex-1 bg-white dark:bg-gray-800 rounded-lg overflow-hidden">
                 <Chat />
               </div>
             </div>
+          </div>
+
+          {/* Hidden video recorder for background recording */}
+          <div className="hidden">
+            <VideoRecorder />
           </div>
         </div>
       )}
